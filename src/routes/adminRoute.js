@@ -1,8 +1,8 @@
 import { Router } from "express";
 import bcrypt  from "bcrypt";
-import { adminModel } from "../../db/db";
+import { adminModel, courseModel } from "../../db/db";
 import { validationMiddleware, signupValidationObject, signinValidationObject } from "../validation/validation";
-
+import { auth } from "../middlewares/authenitcation";
 const adminRouter = Router();
 
 adminRouter.post("/signup", validationMiddleware(signupValidationObject), async (req, res ,next) => {
@@ -54,13 +54,32 @@ adminRouter.post("/signin", validationMiddleware(signinValidationObject), async 
 })
 
 adminRouter.post("/logout", (req, res ,next) => {
-    
+    req.session.destroy( (err) => {
+        if(err) {
+            console.error(err);
+            res.status(400).send("log out error");
+        }
+        else {
+            req.session.clearCookie("connect.sid", {path: "/signin"});
+            console.log("user logged out");
+            res.status(200).send("User logged out");
+        }
+    })
 })
 
-adminRouter.get("/mycourses", (req, res ,next) => {
-    
-})
-
+adminRouter.post("/createcourse", auth,  async (req, res ,next) => {
+    const adminId =  req.session.userId;
+    const { title, description, price, imageUrl } = req.body;
+    const course  = await courseModel.create({
+        title: title,
+        description: description,
+        price: price,
+        imageURL: imageUrl,
+        creatorId: adminId
+    });
+    console.log(`course created Id: ${course._Id}`);
+    res.status(200).json({message: `course with id: ${course._Id} created`});
+});
 export {
     adminRouter,
 }

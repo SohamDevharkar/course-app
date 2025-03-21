@@ -1,6 +1,7 @@
 import { Router } from "express";
 import bcrypt  from "bcrypt";
-import { userModel } from "../../db/db";
+import { courseModel, purchaseModel, userModel } from "../../db/db";
+import auth from "../middlewares/authenitcation";
 import { validationMiddleware, signupValidationObject, signinValidationObject } from "../validation/validation";
 
 const userRouter = Router();
@@ -54,10 +55,20 @@ userRouter.post("/signin", validationMiddleware(signinValidationObject), async (
 });
 
 userRouter.post("/logout", (req, res ,next) => {
-    
-})
+    req.session.destroy( (err) => {
+        if(err) {
+            console.error(err);
+            res.status(400).send("log out error");
+        }
+        else {
+            req.session.clearCookie("connect.sid", {path: "/signin"});
+            console.log("user logged out");
+            res.status(200).send("User logged out");
+        }
+    });
+});
 
-userRouter.get("/mycourses", (req, res ,next) => {
+userRouter.get("/mycourses", auth, (req, res ,next) => {
     
 })
 
