@@ -1,26 +1,38 @@
 import express from "express";
 import mongoose from "mongoose";
-import exceptionHandler from "./exceptionHandler";
-import userRouter from "./routes/userRoute";
-import adminRouter from "./routes/adminRoute";
+import "dotenv/config"
 
-const PORT = 3000;
+import { exceptionHandler } from "./exceptionHandler.js"
+import userRouter from "./routes/userRoute.js";
+import adminRouter from "./routes/adminRoute.js";
+import courseRouter from "./routes/courseRoute.js";
 
+import userSession from "./middlewares/userSession.js";
+import adminSession from "./middlewares/adminSession.js"
+
+const PORT = process.env.PORT;
 const app = express();
+const MONGODB_URL = process.env.MONGODB_URL;
+
+app.use("/api/v1/user", userSession, userRouter);
+app.use("/api/v1/admin", adminSession, adminRouter);
+app.use("/api/v1/courses", courseRouter);
 
 app.use(express.json());
 
 app.use(exceptionHandler);
 
-app.use("/api/v1/user", userRouter);
-app.use("/api/v1/admin", adminRouter);
-app.use("/api/v1/courses", courseRouter);
-
-main().then(console.log("mongodb connected")).catch(err => console.err(err));
-
 async function main() {
-    await mongoose.connect();
-    app.listen(PORT, () => {
-        console.log(`Application started on PORT ${3000}`);
-    });
+    try {
+        await mongoose.connect(MONGODB_URL);
+        console.log("Connected to MongoDB course-app");
+
+        app.listen(PORT, () => {
+            console.log(`Application started on PORT ${3000}`);
+        });
+    } catch (err) {
+        console.log("Failed to connect to the database");
+    }
 }
+
+main();
