@@ -1,4 +1,6 @@
 import session from "express-session";
-import { userSessionConfig } from "../configs/sessionConfig";
+import { userSessionConfig } from "../configs/sessionConfig.js";
 
-export default userSessionMiddleware = session(userSessionConfig);
+const userSessionMiddleware = session(userSessionConfig);
+
+export default userSessionMiddleware;

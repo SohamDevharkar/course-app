@@ -1,29 +1,33 @@
 import express from "express";
 import mongoose from "mongoose";
-import "dotenv/config"
+import "dotenv/config";
 
 import { exceptionHandler } from "./exceptionHandler.js"
 import userRouter from "./routes/userRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import courseRouter from "./routes/courseRoute.js";
 
-import userSession from "./middlewares/userSession.js";
-import adminSession from "./middlewares/adminSession.js"
+import userSessionMiddleware from "./middlewares/userSession.js";
+import adminSessionMiddleware from "./middlewares/adminSession.js";
 
 const PORT = process.env.PORT;
 const app = express();
-const MONGODB_URL = process.env.MONGODB_URL;
-
-app.use("/api/v1/user", userSession, userRouter);
-app.use("/api/v1/admin", adminSession, adminRouter);
-app.use("/api/v1/courses", courseRouter);
+const MONGODB_URL = process.env.MONGO_URL;
 
 app.use(express.json());
-
 app.use(exceptionHandler);
+
+app.use("/api/v1/user", userSessionMiddleware, userRouter);
+app.use("/api/v1/admin", adminSessionMiddleware, adminRouter);
+app.use("/api/v1/courses", courseRouter);
+
+
+
+
 
 async function main() {
     try {
+        console.log(MONGODB_URL)
         await mongoose.connect(MONGODB_URL);
         console.log("Connected to MongoDB course-app");
 

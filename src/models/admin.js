@@ -1,8 +1,8 @@
-import { Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const adminSchema = new Schema({
     email: {type: String, unique: true},
-    passowrd: String,
+    password: String,
     firstName: String,
     lastName: String
 })

@@ -1,6 +1,6 @@
 const userAuthMiddleware = function(req, res, next) {
     console.log('Session: ', req.session);
-    if(req.session && req.sessison.userId) {
+    if(req.session && req.session.userId) {
         req.userId = req.session.userId;
         next()
     } else {

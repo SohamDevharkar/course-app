@@ -1,15 +1,15 @@
-import { adminModel } from "../models/admin";
-import { courseModel } from "../models/course";
+import { adminModel } from "../models/admin.js";
+import { courseModel } from "../models/course.js";
 import zod from "zod";
 import bcrypt from "bcrypt";
 
 async function adminSignup(req, res, next) {
-
-    const schema = Zod.object({
-        email: zod.string().email().min(3),
-        password: zod.string().min(3).max(16),
-        firstName: zod.string().min(3),
-        lastName: z.string().min(3)
+    
+    const schema = zod.object({
+        email: zod.string().email(),
+        password: zod.string(),
+        firstName: zod.string(),
+        lastName: zod.string()
     });
 
     const result = schema.safeParse(req.body);
@@ -20,8 +20,8 @@ async function adminSignup(req, res, next) {
     }
 
     const { email, password, firstName, lastName } = req.body;
-    const hashedPassword = bcrypt.hash(password, 10);
-
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
     try {
         await adminModel.create({ email, password: hashedPassword, firstName, lastName });
         res.status(201).json({ message: "user signup successful" });
@@ -45,22 +45,23 @@ async function adminSignin(req, res, next) {
     }
 
     const { email, password } = req.body;
-    const admin = adminModel.findOne({ email: email });
+    const admin = await adminModel.findOne({ email: email });
+    
     if (!admin) {
         console.log("Invalid Credentials");
         res.status(403).json({ error: "Invalid Credentials" });
     }
-    const password_match = await bcrypt.compare(password, User.password);
+    const password_match = await bcrypt.compare(password, admin.password);
 
     if (password_match) {
         req.session.regenerate((error) => {
             if (error) {
                 console.error(`Error regenerating session`);
-                next(err);
+                next(error);
             } else {
-                req.session.adminId = admin._Id;
-                console.log(`Admin ${Admin.username} signin successful`)
-                res.status(200).send(`logged in as ${Admin.username}`);
+                req.session.adminId = admin._id;
+                console.log(`Admin ${admin.username} signin successful`)
+                res.status(200).send(`logged in as ${admin.firstName} ${admin.lastName}`);
             }
         });
     } else {
@@ -71,9 +72,9 @@ async function adminSignin(req, res, next) {
 
 async function createCourse(req, res, next) {
     const schema = zod.object({
-        title: zod.string().min(3),
-        description: zod.string().min(10),
-        imageUrl: zod.string().url(),
+        title: zod.string(),
+        description: zod.string(),
+        imageURL: zod.string().url(),
         price: zod.number().positive()
     });
 
@@ -84,9 +85,9 @@ async function createCourse(req, res, next) {
         return res.status(400).json({ message: "Incorrect data format", error: result.error });
     }
 
-    const { title, description, imageUrl, price } = req.body;
+    const { title, description, imageURL, price } = req.body;
     try {
-        const course = await courseModel.create({ title, description, imageURL, price });
+        const course = await courseModel.create({ title, description, imageURL, price, creatorId: req.adminId });
         res.status(201).json({ message: "Course created", courseId: course._id });
     } catch (err) {
         next(err);
@@ -110,7 +111,7 @@ async function updateCourse(req, res, next) {
         return res.json({ message: `Incorrect data format, courseId: ${req.courseId}` });
     }
 
-    const { courseId, title, description, imageUrl, price } = req.body;
+    const { courseId, title, description, imageURL, price } = req.body;
     const course = await courseModel.findOne({ _id: courseId, creatorId: req.adminId });
 
     if (!course) {
@@ -124,16 +125,14 @@ async function updateCourse(req, res, next) {
             {
                 title: title || course.title,
                 description: description || course.description,
-                imageURL: imageURL || course.imageURL.at,
+                imageURL: imageURL || course.imageURL,
                 price: price || course.price
             });
 
-        res.status(200).json({ message: "Course created" });
+        res.status(200).json({ message: "Course updated" });
     } catch (err) {
         next(err);
     }
-
-
 }
 
 async function deleteCourse(req, res, next) {
@@ -156,9 +155,9 @@ async function deleteCourse(req, res, next) {
         }
 
         await courseModel.deleteOne({ _id: courseId, creatorId: req.adminId });
-        res.status(200).jsson({ message: "Course deleted" });
+        res.status(200).json({ message: "Course deleted" });
     } catch (err) {
-
+        next(err);
     }
 }
 
@@ -175,15 +174,12 @@ async function adminLogout(req, res, next) {
     req.session.destroy((err) => {
         if (err) {
             console.error(err);
-            res.status(400).send("log out error");
+            return res.status(400).send("log out error");
         }
-        else {
-            req.session.clearCookie("connect.sid", { path: "/signin" });
-            console.log("user logged out");
-            res.status(200).send("User logged out");
-        }
+        res.clearCookie("connect.sid", { path: "/" });
+        console.log("user logged out");
+        res.status(200).send("User logged out");
     });
-
 }
 
 export default {

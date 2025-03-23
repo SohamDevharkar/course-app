@@ -1,5 +1,5 @@
-import { purchaseModel } from "../models/purchase";
-import { courseModel } from "../models/course";
+import { purchaseModel } from "../models/purchase.js";
+import { courseModel } from "../models/course.js";
 
 async function purchaseCourse(req, res, next) {
     const userId = req.session.userId;

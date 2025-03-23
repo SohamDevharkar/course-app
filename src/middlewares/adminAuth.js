@@ -1,5 +1,5 @@
 const adminAuthMiddleware = function(req, res, next) {
-    if(req.session && req.sessison.adminId) {
+    if(req.session && req.session.adminId) {
         req.adminId = req.session.adminId;
         next()
     } else {

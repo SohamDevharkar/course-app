@@ -1,7 +1,7 @@
 import { Router } from "express";
-import userAuthMiddleware from "../middlewares/userAuth";
-import courseController from "../controllers/courseController";
-import userSessionMiddleware from "../middlewares/userSession"
+import userAuthMiddleware from "../middlewares/userAuth.js";
+import courseController from "../controllers/courseController.js";
+import userSessionMiddleware from "../middlewares/userSession.js"
 const courseRouter = Router();
 
 courseRouter.post("/purchase", userSessionMiddleware, userAuthMiddleware, courseController.purchaseCourse);
